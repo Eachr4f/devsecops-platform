@@ -82,8 +82,7 @@ jobs:
         run: ruff format --check .
 
       - name: Tests et couverture (minimum 70 %)
-        run: pytest -q --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=70
-
+        run: python -m pytest -q --cov=app --cov-report=term-missing --cov-report=xml --cov-fail-under=70
       - name: Conserver le rapport de couverture
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
