@@ -10,5 +10,5 @@ def search():
     q = request.args.get("q", "")
     conn = sqlite3.connect(":memory:")
     conn.execute("CREATE TABLE items (name TEXT)")
-    rows = conn.execute(f"SELECT name FROM items WHERE name LIKE '%{q}%'").fetchall()
+    rows = conn.execute("SELECT name FROM items WHERE name LIKE ?", (f"%{q}%",)).fetchall()
     return jsonify(rows)
