@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.env
+*.db
+*.db-*
+
+# Outils de qualite et archives temporaires
+.ruff_cache/
+.artifacts/
+
+# Rapports temporaires
+coverage.xml
+/semgrep.sarif
+/gitleaks.sarif
+/gitleaks.tgz
+/gitleaks

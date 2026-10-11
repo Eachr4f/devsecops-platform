@@ -1,0 +1,51 @@
+services:
+  api:
+    build: ./services/api
+    image: devsecops-api:local
+    restart: unless-stopped
+    environment:
+      DATABASE_PATH: /data/items.db
+    volumes:
+      - api-data:/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    cpus: 1.0
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health', timeout=2)"
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  frontend:
+    build: ./services/frontend
+    image: devsecops-frontend:local
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_BIND_IP:-192.168.56.30}:8080:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+        restart: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 128m
+    cpus: 0.5
+
+volumes:
+  api-data:

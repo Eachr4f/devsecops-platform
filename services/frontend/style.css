@@ -1,0 +1,35 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #101827;
+  color: #e5edf9;
+  max-width: 720px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+main {
+  background: #1c293d;
+  border-radius: 16px;
+  padding: 28px;
+}
+h1 { margin-top: 0; }
+p { line-height: 1.6; }
+form { display: flex; gap: 10px; flex-wrap: wrap; }
+input {
+  flex: 1;
+  min-width: 180px;
+  padding: 12px;
+  border: 1px solid #8392aa;
+  border-radius: 8px;
+}
+button {
+  padding: 12px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: #67e8c1;
+  color: #10231d;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:disabled { opacity: .6; cursor: wait; }
+li { padding: 10px 0; }
+#message { min-height: 24px; color: #fbd38d; }

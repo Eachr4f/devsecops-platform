@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/bin:$PATH"
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "Commit bloque : Gitleaks est introuvable." >&2
+  exit 1
+fi
+
+exec gitleaks git --pre-commit --staged --redact --no-banner
