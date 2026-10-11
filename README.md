@@ -299,7 +299,8 @@ Cette validation vérifie statiquement le workflow ; elle ne prouve pas
 que les actions, téléchargements, permissions et services fonctionneront
 sur GitHub.
 
-**La première exécution complète du pipeline sur GitHub reste à valider.**
+Le pipeline a été exécuté avec succès sur GitHub Actions :
+les cinq jobs ont réussi, pour une durée totale observée de 44 secondes.
 
 ## Gestion des dépendances
 
@@ -324,7 +325,7 @@ Aucune fusion automatique n'est configurée.
 | Analyses et durcissement | Réalisés, avec constats HIGH ouverts sur l'API |
 | Workflow CI et Dependabot | Configurés |
 | Validation statique actionlint | Réussie |
-| Exécution complète de la CI sur GitHub | À valider |
+| Exécution complète de la CI sur GitHub | Réussie : cinq jobs validés |
 | Protection de `main` avec le contrôle obligatoire `CI OK` | À configurer |
 | Démonstrations de blocage dans la CI | À réaliser |
 | Déploiement Kubernetes, GitOps et observabilité | Étapes ultérieures |
