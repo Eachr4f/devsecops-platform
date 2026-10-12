@@ -1,5 +1,5 @@
 # DevSecOps Platform
-
+[![CI](https://github.com/Eachr4f/devsecops-platform/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Eachr4f/devsecops-platform/actions/workflows/ci.yml)
 Projet pédagogique de construction progressive d'une plateforme DevSecOps.
 L'application permet d'ajouter des éléments et de consulter leur liste.
 
@@ -313,6 +313,11 @@ Dependabot est configuré pour proposer des mises à jour hebdomadaires :
 
 Les mises à jour sont proposées sous forme de pull requests.
 Aucune fusion automatique n'est configurée.
+
+## Rapport de sécurité
+
+Les résultats et démonstrations sont détaillés dans
+[le rapport de sécurité](docs/vulnerability-report.md).
 
 ## Avancement
 
