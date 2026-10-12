@@ -17,7 +17,11 @@ help:
 >@echo "make format   : appliquer le formatage"
 >@echo "make test     : exécuter les tests avec couverture"
 >@echo "make check    : exécuter lint et tests"
->@echo "make secrets  : contrôler les fichiers préparés"
+>@echo "make secrets  : analyser l'historique Git"
+>@echo "make staged   : contrôler les fichiers préparés"
+>@echo "make sast     : analyser le code avec Semgrep"
+>@echo "make ci       : lancer lint, tests, Gitleaks et Semgrep"
+>@echo "make hooks    : activer le hook pre-commit"
 
 install:
 >python3 -m venv $(VENV)
@@ -51,4 +55,24 @@ test:
 check: lint test
 
 secrets:
+SEMGREP ?= $(HOME)/.local/share/devsecops-tools/semgrep/bin/semgrep
+
+.PHONY: staged sast ci hooks
+
+secrets:
+>gitleaks git --no-banner --redact --log-opts="HEAD" .
+
+staged:
 >.githooks/pre-commit
+
+sast:
+>"$(SEMGREP)" scan --config p/default --config p/python --config p/flask --config p/dockerfile --metrics=off --error --severity ERROR .
+
+ci:
+>$(MAKE) lint
+>$(MAKE) test
+>$(MAKE) secrets
+>$(MAKE) sast
+
+hooks:
+>git config core.hooksPath .githooks
