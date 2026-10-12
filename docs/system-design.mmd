@@ -1,0 +1,45 @@
+%% Architecture cible du projet sur huit semaines.
+flowchart LR
+    DEV["Développeur"] -->|git push| GH["GitHub Repo"]
+
+    subgraph CI["CI/CD - GitHub Actions"]
+        direction TB
+        T["Lint + Tests"] --> SEC["Scans sécurité"]
+        SEC --> B["Build image"]
+        B --> SIGN["SBOM + Signature"]
+    end
+
+    GH --> CI
+    SIGN -->|push| REG[("GHCR Registry")]
+    CI -->|maj du tag| GITOPS["Repo GitOps"]
+
+    subgraph K8S["Cluster Kubernetes - k3s"]
+        ARGO["ArgoCD"]
+        KYV["Kyverno"]
+        APP["Application<br/>Frontend + API"]
+        FAL["Falco"]
+        VAULT["Vault / Sealed Secrets"]
+    end
+
+    GITOPS -->|pull| ARGO
+    ARGO -->|déploie| KYV
+    KYV -->|admission validée| APP
+    REG -->|pull image| APP
+    VAULT -.->|secrets| APP
+    FAL -.->|surveille| APP
+
+    subgraph OBS["Observabilité"]
+        PROM["Prometheus"]
+        LOKI["Loki"]
+        GRAF["Grafana"]
+        ALERT["Alertmanager"]
+    end
+
+    APP -->|métriques| PROM
+    APP -->|logs| LOKI
+    FAL -->|alertes| LOKI
+    PROM --> GRAF
+    LOKI --> GRAF
+    PROM --> ALERT
+
+    USER["Utilisateur"] -->|HTTPS| APP
