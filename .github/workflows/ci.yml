@@ -18,7 +18,8 @@ env:
   GITLEAKS_VERSION: "8.30.1"
   GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
   SEMGREP_VERSION: "1.180.0"
-
+  TRIVY_VERSION: "0.74.0"
+  TRIVY_SHA256: "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a"
 jobs:
   secrets-scan:
     name: Gitleaks (secrets)
@@ -188,10 +189,104 @@ jobs:
       - name: Nettoyage
         if: always()
         run: docker compose down --volumes
+  trivy:
+    name: Trivy (dépendances, Dockerfiles, images)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      TRIVY_NO_PROGRESS: "true"
+      TRIVY_DISABLE_TELEMETRY: "true"
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Installer Trivy (checksum vérifié)
+        run: |
+          curl -sSfL -o "${RUNNER_TEMP}/trivy.tgz" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  ${RUNNER_TEMP}/trivy.tgz" | sha256sum --check
+          mkdir -p "${RUNNER_TEMP}/trivy-bin"
+          tar -xzf "${RUNNER_TEMP}/trivy.tgz" \
+            -C "${RUNNER_TEMP}/trivy-bin" trivy
+          echo "${RUNNER_TEMP}/trivy-bin" >> "${GITHUB_PATH}"
+
+      - name: Scanner les dépendances et les Dockerfiles
+        run: |
+          trivy fs \
+            --scanners vuln,misconfig \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --skip-dirs services/api/.venv \
+            .
+
+      - name: Construire les deux images
+        run: |
+          docker build --pull -t devsecops-api:ci services/api
+          docker build --pull -t devsecops-frontend:ci services/frontend
+
+      - name: Produire les rapports SARIF des images
+        run: |
+          for service in api frontend; do
+            trivy image \
+              --scanners vuln \
+              --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              --exit-code 0 \
+              --format sarif \
+              --output "trivy-${service}.sarif" \
+              "devsecops-${service}:ci"
+          done
+
+      - name: Bloquer les vulnérabilités graves avec correctif
+        run: |
+          status=0
+          for service in api frontend; do
+            echo "Analyse de l'image ${service}"
+            trivy image \
+              --scanners vuln \
+              --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              --exit-code 1 \
+              "devsecops-${service}:ci" || status=1
+          done
+          exit "${status}"
+
+      - name: Envoyer le rapport API à GitHub
+        if: always() && hashFiles('trivy-api.sarif') != ''
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63
+        with:
+          sarif_file: trivy-api.sarif
+          category: trivy-api
+
+      - name: Envoyer le rapport frontend à GitHub
+        if: always() && hashFiles('trivy-frontend.sarif') != ''
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63
+        with:
+          sarif_file: trivy-frontend.sarif
+          category: trivy-frontend
+
+      - name: Conserver les rapports Trivy
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: trivy-reports
+          path: |
+            trivy-api.sarif
+            trivy-frontend.sarif
+          if-no-files-found: ignore
+
+
   ci-ok:
     name: CI OK
     runs-on: ubuntu-24.04
-    needs: [secrets-scan, lint-test, sast, docker]
+    needs: [secrets-scan, lint-test, sast, docker, trivy]
     if: always()
 
     steps:
