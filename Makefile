@@ -20,8 +20,9 @@ help:
 >@echo "make secrets  : analyser l'historique Git"
 >@echo "make staged   : contrôler les fichiers préparés"
 >@echo "make sast     : analyser le code avec Semgrep"
->@echo "make ci       : lancer lint, tests, Gitleaks et Semgrep"
+>@echo "make ci       : lancer lint, tests, Gitleaks, Semgrep et Trivy"
 >@echo "make hooks    : activer le hook pre-commit"
+>@echo "make scan     : analyser les dépendances, Dockerfiles et images avec Trivy"
 
 install:
 >python3 -m venv $(VENV)
@@ -54,10 +55,9 @@ test:
 
 check: lint test
 
-secrets:
 SEMGREP ?= $(HOME)/.local/share/devsecops-tools/semgrep/bin/semgrep
 
-.PHONY: staged sast ci hooks
+.PHONY: staged sast ci hooks scan
 
 secrets:
 >gitleaks git --no-banner --redact --log-opts="HEAD" .
@@ -68,11 +68,19 @@ staged:
 sast:
 >"$(SEMGREP)" scan --config p/default --config p/python --config p/flask --config p/dockerfile --metrics=off --error --severity ERROR .
 
+scan:
+>trivy fs --scanners vuln,misconfig --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --skip-dirs "$(VENV)" .
+>docker build --pull -t devsecops-api:ci services/api
+>docker build --pull -t devsecops-frontend:ci services/frontend
+>trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 devsecops-api:ci
+>trivy image --scanners vuln --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 devsecops-frontend:ci
+
 ci:
 >$(MAKE) lint
 >$(MAKE) test
 >$(MAKE) secrets
 >$(MAKE) sast
+>$(MAKE) scan
 
 hooks:
 >git config core.hooksPath .githooks
