@@ -1,0 +1,127 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-main
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  TRIVY_VERSION: "0.74.0"
+  TRIVY_SHA256: "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a"
+
+jobs:
+  publish:
+    name: Publier ${{ matrix.service }}
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [api, frontend]
+
+    permissions:
+      contents: read
+      packages: write
+
+    env:
+      SERVICE: ${{ matrix.service }}
+      TRIVY_NO_PROGRESS: "true"
+      TRIVY_DISABLE_TELEMETRY: "true"
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+
+      - name: Installer Trivy (checksum vérifié)
+        run: |
+          curl -sSfL -o "${RUNNER_TEMP}/trivy.tgz" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  ${RUNNER_TEMP}/trivy.tgz" | sha256sum --check
+          mkdir -p "${RUNNER_TEMP}/trivy-bin"
+          tar -xzf "${RUNNER_TEMP}/trivy.tgz" \
+            -C "${RUNNER_TEMP}/trivy-bin" trivy
+          echo "${RUNNER_TEMP}/trivy-bin" >> "${GITHUB_PATH}"
+
+      - name: Définir le nom de l'image
+        run: |
+          IMAGE="${REGISTRY}/${GITHUB_REPOSITORY_OWNER,,}/devsecops-${SERVICE}"
+          echo "IMAGE=${IMAGE}" >> "${GITHUB_ENV}"
+
+      - name: Construire l'image
+        run: |
+          docker build --pull \
+            --label "org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}" \
+            --label "org.opencontainers.image.revision=${GITHUB_SHA}" \
+            --tag "${IMAGE}:${GITHUB_SHA}" \
+            "services/${SERVICE}"
+
+      - name: Scanner l'image avant publication
+        run: |
+          trivy image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            "${IMAGE}:${GITHUB_SHA}"
+
+      - name: Se connecter à GHCR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "${GH_TOKEN}" |
+            docker login "${REGISTRY}" \
+              --username "${GITHUB_ACTOR}" \
+              --password-stdin
+
+      - name: Publier l'image et relever son digest
+        run: |
+          docker push "${IMAGE}:${GITHUB_SHA}"
+          REF="$(docker image inspect \
+            --format '{{index .RepoDigests 0}}' \
+            "${IMAGE}:${GITHUB_SHA}")"
+          case "${REF}" in
+            "${IMAGE}@sha256:"*) ;;
+            *)
+              echo "ERREUR : référence publiée inattendue : ${REF}"
+              exit 1
+              ;;
+          esac
+          echo "REF=${REF}" >> "${GITHUB_ENV}"
+          printf '%s\n' "${REF}" > "digest-${SERVICE}.txt"
+
+      - name: Conserver le digest
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: digest-${{ matrix.service }}
+          path: digest-${{ matrix.service }}.txt
+          if-no-files-found: error
+
+      - name: Résumé de la publication
+        run: |
+          {
+            echo "### Image ${SERVICE}"
+            echo
+            echo "Commit : ${GITHUB_SHA}"
+            echo
+            echo "Référence par digest :"
+            echo '```text'
+            echo "${REF}"
+            echo '```'
+            echo
+            echo "Signature Cosign : pas encore ajoutée à ce workflow."
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Fermer la connexion au registre
+        if: always()
+        run: docker logout "${REGISTRY}"
