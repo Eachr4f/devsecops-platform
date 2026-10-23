@@ -1,0 +1,1 @@
+ghcr.io/eachr4f/devsecops-api@sha256:8cd66f0d170a152c51418e9f0e20a6511c0c1713ed0fe745bda149c91665b1c2

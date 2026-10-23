@@ -1,0 +1,1 @@
+ghcr.io/eachr4f/devsecops-frontend@sha256:9a602c809498706567a7d53db368c9d3a8807258bc4072a966f888ee8ff8ba6a
