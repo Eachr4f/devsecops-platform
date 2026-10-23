@@ -86,7 +86,8 @@ curl --fail --silent --show-error \
 ├── .github/
 │   ├── dependabot.yml
 │   └── workflows/
-│       └── ci.yml
+│       ├── ci.yml
+│       └── publish.yml
 ├── docs/
 │   └── security/
 ├── services/
@@ -221,7 +222,7 @@ les caches, les fichiers `.env` et les bases SQLite locales.
 | Gitleaks | Détection de secrets |
 | Semgrep | Analyse statique du code |
 | Hadolint | Analyse des Dockerfiles |
-| Trivy | Analyse des vulnérabilités des images Docker |
+| Trivy | Analyse des dépendances, des Dockerfiles et des images Docker |
 | actionlint | Validation statique du workflow GitHub Actions |
 
 Les rapports locaux sont conservés dans `docs/security/`.
@@ -241,8 +242,7 @@ Ces résultats décrivent les images analysées au moment des scans.
 Une nouvelle construction ou une mise à jour de la base de vulnérabilités
 peut modifier les résultats.
 
-**Trivy a été utilisé localement ; il n'est pas encore intégré au workflow
-CI décrit ci-dessous.**
+**Trivy est intégré à la CI et à la publication.** Les vulnérabilités HIGH/CRITICAL avec correctif bloquent le contrôle. Les mauvaises configurations HIGH/CRITICAL détectées bloquent également la CI.
 
 ## Pipeline d'intégration continue
 
@@ -252,7 +252,7 @@ Le workflow `.github/workflows/ci.yml` est configuré pour s'exécuter :
 - Lors d'une pull request.
 - Sur déclenchement manuel.
 
-Il contient quatre jobs de contrôle et un job de synthèse :
+Il contient cinq jobs de contrôle et un job de synthèse :
 
 | Job | Contrôles |
 |---|---|
@@ -260,7 +260,8 @@ Il contient quatre jobs de contrôle et un job de synthèse :
 | `lint-test` | Ruff, formatage, tests pytest et couverture minimale de 70 % |
 | `sast` | Analyse Semgrep avec sélection des résultats de sévérité ERROR |
 | `docker` | Hadolint, construction, démarrage, tests HTTP et contrôles de durcissement |
-| `ci-ok` | Vérification de la réussite des quatre jobs précédents |
+| `trivy` | Dépendances, Dockerfiles et images ; contrôle bloquant et rapports SARIF |
+| `ci-ok` | Vérification de la réussite des cinq jobs précédents |
 
 ### Analyse Semgrep
 
@@ -299,8 +300,8 @@ Cette validation vérifie statiquement le workflow ; elle ne prouve pas
 que les actions, téléchargements, permissions et services fonctionneront
 sur GitHub.
 
-Le pipeline a été exécuté avec succès sur GitHub Actions :
-les cinq jobs ont réussi, pour une durée totale observée de 44 secondes.
+La première validation du pipeline comportait cinq jobs au total.
+Depuis l'ajout de Trivy, la CI comporte six jobs, dont `CI OK`.
 
 ## Gestion des dépendances
 
@@ -330,9 +331,11 @@ Les résultats et démonstrations sont détaillés dans
 | Analyses et durcissement | Réalisés, avec constats HIGH ouverts sur l'API |
 | Workflow CI et Dependabot | Configurés |
 | Validation statique actionlint | Réussie |
-| Exécution complète de la CI sur GitHub | Réussie : cinq jobs validés |
-| Protection de `main` avec le contrôle obligatoire `CI OK` | À configurer |
-| Démonstrations de blocage dans la CI | À réaliser |
+| Exécution complète de la CI sur GitHub | Réussie ; Trivy intégré à CI OK |
+| Protection de `main` avec le contrôle obligatoire `CI OK` | Configurée ; blocages observés |
+| Démonstrations de blocage dans la CI | Tests, secrets et SQL réalisés ; preuves Trivy à finaliser |
+| Publication GHCR, SBOM et signatures | Réalisés pour API et frontend |
+| Vérifications Cosign depuis la VM | Réussies ; mauvaise identité et image non signée refusées |
 | Déploiement Kubernetes, GitOps et observabilité | Étapes ultérieures |
 
 ## Objectif pédagogique
@@ -340,6 +343,25 @@ Les résultats et démonstrations sont détaillés dans
 Cette étape du projet établit une base applicative conteneurisée,
 testée et accompagnée de contrôles de sécurité.
 
-La suite consiste à valider le pipeline sur GitHub, à protéger la branche
-principale, puis à poursuivre vers le déploiement Kubernetes,
-l'automatisation et l'observabilité.
+La suite consiste à finaliser les preuves de semaine 3 et le contrôle
+de bout en bout, puis à poursuivre vers Kubernetes, GitOps et l'observabilité.
+
+## Images publiées, SBOM et signatures
+
+Le workflow `.github/workflows/publish.yml` construit et analyse les images,
+les publie sur GHCR, génère leurs SBOM avec Syft, puis signe les images
+et atteste les SBOM avec Cosign. Il se déclenche uniquement sur les push
+de `main`.
+
+| Image | Registre |
+|---|---|
+| API | `ghcr.io/eachr4f/devsecops-api` |
+| Frontend | `ghcr.io/eachr4f/devsecops-frontend` |
+
+Les images sont vérifiées par digest et avec l'identité exacte du workflow.
+Les signatures et attestations des deux images ont également été vérifiées
+depuis la VM. Les tests de mauvaise identité et d'image non signée ont échoué
+pour les raisons attendues.
+
+Commandes, digests et preuves :
+[documentation de la chaîne logicielle](docs/supply-chain.md).
