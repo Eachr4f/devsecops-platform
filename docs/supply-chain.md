@@ -150,7 +150,8 @@ de ces attestations après leur vérification.
 
 - Vérifier la visibilité publique des deux paquets GHCR et leur liaison au dépôt.
 - Confirmer les preuves Trivy rouge puis vert et la fermeture de la PR de démonstration.
-- Actualiser le suivi des vulnérabilités sans correctif.
+- Suivi des vulnérabilités sans correctif actualisé le 25 octobre 2026 :
+  voir le rapport de sécurité. Les constats API restent ouverts.
 - Modifier un élément visible de l'application via une PR, puis vérifier
   le nouveau digest publié après fusion.
 - Finaliser la documentation et publier le tag `v0.3.0`.
