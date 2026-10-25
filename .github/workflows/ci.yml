@@ -124,7 +124,7 @@ jobs:
 
       - name: Envoyer le rapport à GitHub (Security > Code scanning)
         if: always() && hashFiles('semgrep.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee
         with:
           sarif_file: semgrep.sarif
           category: semgrep
@@ -260,14 +260,14 @@ jobs:
 
       - name: Envoyer le rapport API à GitHub
         if: always() && hashFiles('trivy-api.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee
         with:
           sarif_file: trivy-api.sarif
           category: trivy-api
 
       - name: Envoyer le rapport frontend à GitHub
         if: always() && hashFiles('trivy-frontend.sarif') != ''
-        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee
         with:
           sarif_file: trivy-frontend.sarif
           category: trivy-frontend
