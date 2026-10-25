@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevSecOps Lab</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <h1>DevSecOps Lab — Chaîne logicielle sécurisée</h1>
+    <p>Application de démonstration — Flask, Nginx et Docker Compose.</p>
+
+    <form id="item-form">
+      <input id="name" aria-label="Nom de l'élément"
+             placeholder="Nouvel élément"
+             maxlength="100" required>
+      <button id="submit" type="submit">Ajouter</button>
+    </form>
+
+    <p id="message" role="status"></p>
+    <h2>Éléments enregistrés</h2>
+    <ul id="items"></ul>
+  </main>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
