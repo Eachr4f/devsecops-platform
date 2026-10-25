@@ -149,11 +149,8 @@ de ces attestations après leur vérification.
 ## Validations restantes avant clôture de la semaine 3
 
 - Vérifier la visibilité publique des deux paquets GHCR et leur liaison au dépôt.
-- Confirmer les preuves Trivy rouge puis vert et la fermeture de la PR de démonstration.
 - Suivi des vulnérabilités sans correctif actualisé le 25 octobre 2026 :
   voir le rapport de sécurité. Les constats API restent ouverts.
-- Modifier un élément visible de l'application via une PR, puis vérifier
-  le nouveau digest publié après fusion.
 - Finaliser la documentation et publier le tag `v0.3.0`.
 
 ## Contrôle de bout en bout — 25 octobre 2026
@@ -179,3 +176,21 @@ et le titre extrait sont conservés dans
 Ce contrôle valide le parcours de la modification jusqu'au contenu
 de l'image publiée et vérifiée. Il ne constitue pas un déploiement
 de cette image dans l'application en cours d'exécution.
+
+## Démonstration Trivy : avant et après correction
+
+La PR #12 a introduit `requests==2.19.1` au commit `1b2cd69`.
+Trivy et le contrôle de synthèse CI OK ont échoué.
+
+La dépendance inutilisée a ensuite été supprimée au commit `c55c6b5`,
+sur la branche `demo/vulnerable-dependency`.
+
+L'exécution manuelle CI #46, déclenchée sur cette branche corrigée,
+a réussi : les six jobs, dont Trivy et CI OK, sont verts.
+
+La PR #12 est restée fermée sans fusion.
+Le résultat vert provient d'un déclenchement manuel workflow_dispatch,
+pas d'une nouvelle exécution de la PR fermée.
+
+Les captures et le lien vers l'exécution sont présentés dans
+[le rapport de sécurité](vulnerability-report.md).

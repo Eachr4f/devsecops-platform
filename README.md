@@ -333,7 +333,7 @@ Les résultats et démonstrations sont détaillés dans
 | Validation statique actionlint | Réussie |
 | Exécution complète de la CI sur GitHub | Réussie ; Trivy intégré à CI OK |
 | Protection de `main` avec le contrôle obligatoire `CI OK` | Configurée ; blocages observés |
-| Démonstrations de blocage dans la CI | Tests, secrets et SQL réalisés ; preuves Trivy à finaliser |
+| Démonstrations de blocage dans la CI | Tests, secrets et SQL réalisés ; Trivy rouge sur la PR #12 puis vert après correction dans CI #46 |
 | Publication GHCR, SBOM et signatures | Réalisés pour API et frontend |
 | Vérifications Cosign depuis la VM | Réussies ; mauvaise identité et image non signée refusées |
 | Déploiement Kubernetes, GitOps et observabilité | Étapes ultérieures |
