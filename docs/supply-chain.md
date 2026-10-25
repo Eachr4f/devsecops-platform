@@ -155,3 +155,27 @@ de ces attestations après leur vérification.
 - Modifier un élément visible de l'application via une PR, puis vérifier
   le nouveau digest publié après fusion.
 - Finaliser la documentation et publier le tag `v0.3.0`.
+
+## Contrôle de bout en bout — 25 octobre 2026
+
+La PR #23 a modifié le titre visible du frontend :
+« DevSecOps Lab — Chaîne logicielle sécurisée ».
+
+Après fusion, les deux jobs Publish ont réussi.
+Depuis la VM, les signatures et attestations des nouvelles images API
+et frontend ont été vérifiées avec l'identité attendue du workflow.
+
+L'image frontend a été téléchargée depuis GHCR par digest.
+Son fichier `/usr/share/nginx/html/index.html`, extrait sans démarrer
+le conteneur, contient le nouveau titre.
+
+Le label de révision de l'image indique le commit :
+`9ea08c09a50872d6e82fb24f8720dd86e629ea89`.
+
+Les références des deux images, les sorties Cosign, le fichier HTML
+et le titre extrait sont conservés dans
+[les preuves de bout en bout](security/week3/end-to-end/).
+
+Ce contrôle valide le parcours de la modification jusqu'au contenu
+de l'image publiée et vérifiée. Il ne constitue pas un déploiement
+de cette image dans l'application en cours d'exécution.
